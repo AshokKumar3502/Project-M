@@ -1,0 +1,81 @@
+2026-03-22 17:30:41,247 - INFO - ==================================================================
+2026-03-22 17:30:41,247 - INFO -   NSE TICK BOT — Zero Delay Signal System
+2026-03-22 17:30:41,247 - INFO -   Supertrend(10,3.0) · HA · 3-min from ticks
+2026-03-22 17:30:41,247 - INFO -   Dashboard → http://localhost:8000
+2026-03-22 17:30:41,247 - INFO - ==================================================================
+2026-03-22 17:30:41,252 - ERROR - UPSTOX_ACCESS_TOKEN env var not set.
+2026-03-22 17:39:03,632 - INFO - ==================================================================
+2026-03-22 17:39:03,632 - INFO -   NSE TICK BOT — Zero Delay Signal System
+2026-03-22 17:39:03,632 - INFO -   Supertrend(10,3.0) · HA · 3-min from ticks
+2026-03-22 17:39:03,632 - INFO -   Dashboard → http://localhost:8000
+2026-03-22 17:39:03,646 - INFO - ==================================================================
+2026-03-22 17:39:03,646 - INFO - Validating Upstox token…
+2026-03-22 17:39:03,901 - INFO -   ✅ AVULADODDI ASHOK KUMAR (ashok05621@gmail.com)
+2026-03-22 17:39:04,915 - INFO -   ✅ Telegram bot: @Ashok_alerts_bot
+2026-03-22 17:39:04,932 - INFO - Loading 3-min history for 18 instruments…
+2026-03-22 17:39:05,051 - WARNING -   ⚠️  [PAGEIND] HTTP 400 — using dummy
+2026-03-22 17:39:05,671 - WARNING -   ⚠️  [SHREECEM] HTTP 400 — using dummy
+2026-03-22 17:39:06,327 - WARNING -   ⚠️  [MARUTI] HTTP 400 — using dummy
+2026-03-22 17:39:06,762 - WARNING -   ⚠️  [SOLARINDS] HTTP 400 — using dummy
+2026-03-22 17:39:07,180 - WARNING -   ⚠️  [PAYTM] HTTP 400 — using dummy
+2026-03-22 17:39:07,690 - WARNING -   ⚠️  [BOSCHLTD] HTTP 400 — using dummy
+2026-03-22 17:39:08,115 - WARNING -   ⚠️  [DIXON] HTTP 400 — using dummy
+2026-03-22 17:39:08,557 - WARNING -   ⚠️  [ULTRACEMCO] HTTP 400 — using dummy
+2026-03-22 17:39:09,012 - WARNING -   ⚠️  [JIOFIN] HTTP 400 — using dummy
+2026-03-22 17:39:09,461 - WARNING -   ⚠️  [OFSS] HTTP 400 — using dummy
+2026-03-22 17:39:09,925 - WARNING -   ⚠️  [POLYCAB] HTTP 400 — using dummy
+2026-03-22 17:39:10,351 - WARNING -   ⚠️  [ABB] HTTP 400 — using dummy
+2026-03-22 17:39:10,897 - WARNING -   ⚠️  [DIVISLAB] HTTP 400 — using dummy
+2026-03-22 17:39:11,331 - WARNING -   ⚠️  [NIFTY 50] HTTP 400 — using dummy
+2026-03-22 17:39:11,795 - WARNING -   ⚠️  [BANK NIFTY] HTTP 400 — using dummy
+2026-03-22 17:39:12,263 - WARNING -   ⚠️  [SENSEX] HTTP 400 — using dummy
+2026-03-22 17:39:12,766 - WARNING -   ⚠️  [FIN NIFTY] HTTP 400 — using dummy
+2026-03-22 17:39:13,202 - WARNING -   ⚠️  [MIDCAP SELECT] HTTP 400 — using dummy
+2026-03-22 17:39:13,511 - INFO - 
+✅ 18/18 instruments ready.
+
+2026-03-22 17:39:13,528 - INFO -   ✅ HTF bias cache active
+
+2026-03-22 17:39:13,548 - INFO - Market closed — opens Monday 23 Mar 09:15 IST
+2026-03-22 17:45:47,839 - INFO - ==================================================================
+2026-03-22 17:45:47,839 - INFO -   NSE TICK BOT — Zero Delay Signal System
+2026-03-22 17:45:47,839 - INFO -   Supertrend(10,3.0) · HA · 3-min from ticks
+2026-03-22 17:45:47,839 - INFO -   Dashboard → http://localhost:8000
+2026-03-22 17:45:47,843 - INFO - ==================================================================
+2026-03-22 17:45:47,843 - INFO - Validating Upstox token…
+2026-03-22 17:45:48,019 - INFO -   ✅ AVULADODDI ASHOK KUMAR (ashok05621@gmail.com)
+2026-03-22 17:45:48,579 - INFO -   ✅ Telegram bot: @Ashok_alerts_bot
+2026-03-22 17:45:48,579 - INFO - Loading 3-min history for 18 instruments…
+2026-03-22 17:45:48,584 - INFO -   History range: 2026-01-19 to 2026-03-20
+2026-03-22 17:45:48,716 - WARNING -   ⚠️  [PAGEIND] HTTP 400 — using dummy
+2026-03-22 17:45:49,176 - WARNING -   ⚠️  [SHREECEM] HTTP 400 — using dummy
+2026-03-22 17:45:49,628 - WARNING -   ⚠️  [MARUTI] HTTP 400 — using dummy
+2026-03-22 17:45:50,102 - WARNING -   ⚠️  [SOLARINDS] HTTP 400 — using dummy
+2026-03-22 17:45:50,556 - WARNING -   ⚠️  [PAYTM] HTTP 400 — using dummy
+2026-03-22 17:45:50,993 - WARNING -   ⚠️  [BOSCHLTD] HTTP 400 — using dummy
+2026-03-22 17:45:51,477 - WARNING -   ⚠️  [DIXON] HTTP 400 — using dummy
+2026-03-22 17:45:51,913 - WARNING -   ⚠️  [ULTRACEMCO] HTTP 400 — using dummy
+2026-03-22 17:45:52,337 - WARNING -   ⚠️  [JIOFIN] HTTP 400 — using dummy
+2026-03-22 17:45:52,771 - WARNING -   ⚠️  [OFSS] HTTP 400 — using dummy
+2026-03-22 17:45:53,186 - WARNING -   ⚠️  [POLYCAB] HTTP 400 — using dummy
+2026-03-22 17:45:53,601 - WARNING -   ⚠️  [ABB] HTTP 400 — using dummy
+2026-03-22 17:45:54,047 - WARNING -   ⚠️  [DIVISLAB] HTTP 400 — using dummy
+2026-03-22 17:45:54,462 - WARNING -   ⚠️  [NIFTY 50] HTTP 400 — using dummy
+2026-03-22 17:45:54,911 - WARNING -   ⚠️  [BANK NIFTY] HTTP 400 — using dummy
+2026-03-22 17:45:55,342 - WARNING -   ⚠️  [SENSEX] HTTP 400 — using dummy
+2026-03-22 17:45:55,739 - WARNING -   ⚠️  [FIN NIFTY] HTTP 400 — using dummy
+2026-03-22 17:45:56,152 - WARNING -   ⚠️  [MIDCAP SELECT] HTTP 400 — using dummy
+2026-03-22 17:45:56,468 - INFO - 
+✅ 18/18 instruments ready.
+
+2026-03-22 17:45:56,468 - INFO -   ✅ HTF bias cache active
+
+2026-03-22 17:45:56,468 - INFO - Market closed — opens Monday 23 Mar 09:15 IST
+2026-03-22 21:19:41,508 - ERROR - Exception in callback _ProactorBasePipeTransport._call_connection_lost(None)
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost(None)>
+Traceback (most recent call last):
+  File "C:\Users\ashok kumar\AppData\Local\Programs\Python\Python311\Lib\asyncio\events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Users\ashok kumar\AppData\Local\Programs\Python\Python311\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host

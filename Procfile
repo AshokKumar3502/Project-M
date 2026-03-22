@@ -1,0 +1,1 @@
+web: python nse_tick_bot.py
