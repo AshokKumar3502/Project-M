@@ -565,6 +565,10 @@ def store_tick(key: str, name: str, ltp: float, ltt_ms: int):
 _bot_instance = None
 _bot_lock = threading.Lock()
 
+# Token metadata — tracks when token was last updated for verification
+_token_meta = {"updated_at": None, "token_preview": "not set yet"}
+_token_meta_lock = threading.Lock()
+
 
 # ════════════════════════════════════════════════════════════════════
 # FASTAPI APP
@@ -628,15 +632,7 @@ async def post_tick_endpoint(payload: dict):
 
 @app.post("/api/update-token")
 async def update_token(payload: dict):
-    """
-    Update Upstox access token without restarting the server.
-    Protected by ADMIN_SECRET env var.
-
-    Usage:
-      curl -X POST https://your-app.railway.app/api/update-token \
-           -H "Content-Type: application/json" \
-           -d '{"admin_secret": "YOUR_ADMIN_SECRET", "token": "NEW_UPSTOX_TOKEN"}'
-    """
+    """Update Upstox access token live — no restart needed."""
     admin_secret = os.getenv("ADMIN_SECRET", "")
     if not admin_secret:
         return {"ok": False, "error": "ADMIN_SECRET not configured on server"}
@@ -647,28 +643,64 @@ async def update_token(payload: dict):
     if not new_token:
         return {"ok": False, "error": "token field is empty"}
 
-    # Update env var in process memory
+    # Update env var + token metadata
     os.environ["UPSTOX_ACCESS_TOKEN"] = new_token
+    preview = f"{new_token[:8]}...{new_token[-4:]}"
+    with _token_meta_lock:
+        _token_meta["updated_at"] = now_ist().isoformat()
+        _token_meta["token_preview"] = preview
+    logger.info(f"Token updated via API: {preview}")
 
-    # Hot-reload the bot's token and reconnect WebSocket
+    # Fully destroy old streamer (including its auto_reconnect loop)
+    # then create a fresh one with the new token — avoids 401 from cached creds
+    def _hard_reconnect():
+        import time as _t
+        with _bot_lock:
+            if _bot_instance is None:
+                return
+            bot = _bot_instance
+            bot.access_token = new_token
+            # Kill existing streamer completely
+            old = bot.streamer
+            bot.streamer = None
+            if old is not None:
+                try: old.auto_reconnect(False)
+                except Exception: pass
+                try: old.disconnect()
+                except Exception: pass
+            _t.sleep(3)
+            logger.info("Starting fresh streamer with new token...")
+            bot.start_streamer()
+
+    threading.Thread(target=_hard_reconnect, daemon=True).start()
+
+    return {
+        "ok": True,
+        "message": f"Token updated ({preview}) — WebSocket reconnecting with new credentials"
+    }
+
+
+@app.get("/api/token-status")
+async def token_status():
+    """Check what token is currently active — call this to verify update worked."""
+    with _token_meta_lock:
+        meta = dict(_token_meta)
+    env_token = os.getenv("UPSTOX_ACCESS_TOKEN", "")
+    env_preview = f"{env_token[:8]}...{env_token[-4:]}" if len(env_token) > 12 else "not set"
     with _bot_lock:
+        bot_preview = ""
+        ws_connected = False
         if _bot_instance is not None:
-            _bot_instance.access_token = new_token
-            logger.info("Token updated via API — reconnecting WebSocket...")
-            try:
-                if _bot_instance.streamer:
-                    _bot_instance.streamer.disconnect()
-            except Exception:
-                pass
-            # Reconnect in background so API returns immediately
-            def _reconnect():
-                import time as _time
-                _time.sleep(2)
-                _bot_instance.start_streamer()
-            threading.Thread(target=_reconnect, daemon=True).start()
-            return {"ok": True, "message": "Token updated and WebSocket reconnecting"}
-        else:
-            return {"ok": True, "message": "Token saved — bot not running yet"}
+            t = _bot_instance.access_token
+            bot_preview = f"{t[:8]}...{t[-4:]}" if len(t) > 12 else "not set"
+            ws_connected = _bot_instance.ws_state.get("connected", False)
+    return {
+        "token_in_env":       env_preview,
+        "token_in_bot":       bot_preview,
+        "last_updated_at":    meta["updated_at"],
+        "last_token_preview": meta["token_preview"],
+        "websocket_connected": ws_connected,
+    }
 
 
 @app.get("/api/events")
