@@ -485,13 +485,16 @@ IST = timezone(timedelta(hours=5, minutes=30))
 def now_ist() -> datetime:
     return datetime.now(IST).replace(tzinfo=None)
 
+_log_handlers = [logging.StreamHandler(sys.stdout)]
+try:
+    _log_handlers.append(logging.FileHandler("nse_tick_bot.log", encoding="utf-8"))
+except Exception:
+    pass  # Railway filesystem may be read-only — stdout only is fine
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("nse_tick_bot.log", encoding="utf-8"),
-        logging.StreamHandler(sys.stdout),
-    ],
+    handlers=_log_handlers,
 )
 logger = logging.getLogger(__name__)
 logging.getLogger("upstox_client").setLevel(logging.WARNING)
@@ -558,6 +561,11 @@ def store_tick(key: str, name: str, ltp: float, ltt_ms: int):
     _sse_broadcast("tick", entry)
 
 
+# Global bot instance (set once bot starts — used by token-update endpoint)
+_bot_instance = None
+_bot_lock = threading.Lock()
+
+
 # ════════════════════════════════════════════════════════════════════
 # FASTAPI APP
 # ════════════════════════════════════════════════════════════════════
@@ -616,6 +624,51 @@ async def post_tick_endpoint(payload: dict):
         int(payload.get("ltt", 0)),
     )
     return {"ok": True}
+
+
+@app.post("/api/update-token")
+async def update_token(payload: dict):
+    """
+    Update Upstox access token without restarting the server.
+    Protected by ADMIN_SECRET env var.
+
+    Usage:
+      curl -X POST https://your-app.railway.app/api/update-token \
+           -H "Content-Type: application/json" \
+           -d '{"admin_secret": "YOUR_ADMIN_SECRET", "token": "NEW_UPSTOX_TOKEN"}'
+    """
+    admin_secret = os.getenv("ADMIN_SECRET", "")
+    if not admin_secret:
+        return {"ok": False, "error": "ADMIN_SECRET not configured on server"}
+    if payload.get("admin_secret") != admin_secret:
+        return {"ok": False, "error": "Invalid admin secret"}
+
+    new_token = (payload.get("token") or "").strip()
+    if not new_token:
+        return {"ok": False, "error": "token field is empty"}
+
+    # Update env var in process memory
+    os.environ["UPSTOX_ACCESS_TOKEN"] = new_token
+
+    # Hot-reload the bot's token and reconnect WebSocket
+    with _bot_lock:
+        if _bot_instance is not None:
+            _bot_instance.access_token = new_token
+            logger.info("Token updated via API — reconnecting WebSocket...")
+            try:
+                if _bot_instance.streamer:
+                    _bot_instance.streamer.disconnect()
+            except Exception:
+                pass
+            # Reconnect in background so API returns immediately
+            def _reconnect():
+                import time as _time
+                _time.sleep(2)
+                _bot_instance.start_streamer()
+            threading.Thread(target=_reconnect, daemon=True).start()
+            return {"ok": True, "message": "Token updated and WebSocket reconnecting"}
+        else:
+            return {"ok": True, "message": "Token saved — bot not running yet"}
 
 
 @app.get("/api/events")
@@ -1115,13 +1168,32 @@ class UpstoxTickBot:
         logger.info(f"Loading 3-min history for {len(self.WATCHLIST)} instruments…")
         headers  = {"Authorization": f"Bearer {self.access_token}", "Accept": "application/json"}
         today    = now_ist().date()
-        # Upstox rejects weekend/holiday dates — step back to last weekday
+
+        # Find last real trading day — skip weekends AND market holidays (e.g. Holi).
+        # Try up to 10 days back using NIFTY 50 as probe until we get HTTP 200.
+        probe_key = requests.utils.quote("NSE_INDEX|Nifty 50", safe="")
         last_trading_day = today
-        while last_trading_day.weekday() >= 5:  # 5=Sat, 6=Sun
+        while last_trading_day.weekday() >= 5:       # skip Sat/Sun first
             last_trading_day -= timedelta(days=1)
+
+        for _ in range(10):                          # then probe for holidays
+            probe_to   = last_trading_day.strftime("%Y-%m-%d")
+            probe_from = (last_trading_day - timedelta(days=5)).strftime("%Y-%m-%d")
+            try:
+                probe_url = (f"https://api.upstox.com/v2/historical-candle"
+                             f"/{probe_key}/3minute/{probe_to}/{probe_from}")
+                pr = requests.get(probe_url, headers=headers, timeout=10)
+                if pr.status_code == 200 and pr.json().get("data", {}).get("candles"):
+                    break   # found a real trading day
+            except Exception:
+                pass
+            last_trading_day -= timedelta(days=1)
+            while last_trading_day.weekday() >= 5:   # skip weekends while stepping back
+                last_trading_day -= timedelta(days=1)
+
         to_date   = last_trading_day.strftime("%Y-%m-%d")
         from_date = (last_trading_day - timedelta(days=60)).strftime("%Y-%m-%d")
-        logger.info(f"  History range: {from_date} to {to_date}")
+        logger.info(f"  Last trading day: {to_date}  |  history from: {from_date}")
         loaded   = 0
 
         for info in self.WATCHLIST:
@@ -1281,28 +1353,31 @@ class UpstoxTickBot:
 
 def run_bot():
     """Bot runs in a background daemon thread."""
+    global _bot_instance
     bot = UpstoxTickBot()
+    with _bot_lock:
+        _bot_instance = bot
     bot.start()
 
 
 if __name__ == "__main__":
     PORT = int(os.getenv("PORT", 8000))
-    HOST = os.getenv("HOST", "0.0.0.0")
+    HOST = "0.0.0.0"   # Railway requires 0.0.0.0 — never 127.0.0.1
 
-    # Start bot in background thread
+    print(f"\n{'='*60}")
+    print(f"  PORT      : {PORT}")
+    print(f"  Dashboard : http://0.0.0.0:{PORT}")
+    print(f"{'='*60}\n")
+
+    # Start bot in background — AFTER printing so Railway sees output immediately
     bot_thread = threading.Thread(target=run_bot, daemon=True, name="UpstoxBot")
     bot_thread.start()
 
-    print(f"\n{'='*60}")
-    print(f"  🌐  Dashboard  →  http://localhost:{PORT}")
-    print(f"  📡  SSE stream →  http://localhost:{PORT}/api/events")
-    print(f"  📋  Signals    →  http://localhost:{PORT}/api/signals")
-    print(f"{'='*60}\n")
-
-    # Start FastAPI (blocks main thread)
+    # uvicorn starts immediately — dashboard is reachable even while
+    # bot is loading history (which can take 30-60 seconds)
     uvicorn.run(
         app,
         host=HOST,
         port=PORT,
-        log_level="warning",   # suppress uvicorn noise; bot uses its own logger
+        log_level="info",
     )
